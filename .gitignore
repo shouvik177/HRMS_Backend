@@ -1,0 +1,9 @@
+# Database (local SQLite)
+db.sqlite3
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+.env
+*.log
