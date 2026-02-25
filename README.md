@@ -44,20 +44,19 @@ Use the token in requests: `Authorization: Token <token>`.
 
 ## Deploy on Render
 
-Migrations must run so `auth_user` and other tables exist. Two options:
+Migrations must run so `auth_user` and other tables exist. In Render → your service → **Settings** → **Build & Deploy** set **Start Command** to one of:
 
-**Option A – Use the start script (recommended)**  
-Set **Start Command** in Render to:
+**If Root Directory is the folder that contains `manage.py` (e.g. `backend`):**
 ```bash
-sh start.sh
+python manage.py migrate --noinput && uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
-`start.sh` runs `python manage.py migrate --noinput` then starts uvicorn.
 
-**Option B – Set commands in Render dashboard**  
-- **Release Command:** `python manage.py migrate --noinput`  
-- **Start Command:** keep your current command (e.g. `uvicorn main:app --host 0.0.0.0 --port $PORT`).
+**If Root Directory is repo root and the app is in a `backend` subfolder:**
+```bash
+cd backend && python manage.py migrate --noinput && uvicorn main:app --host 0.0.0.0 --port $PORT
+```
 
-After redeploying, signup/login should work (no more "no such table: auth_user").
+Or use `sh start.sh` (or `cd backend && sh start.sh`) if that script is next to `manage.py`. Then **Manual Deploy** so the service restarts. After that, signup/login and employees/attendance should work (no more "no such table: auth_user").
 
 ## Connect frontend
 

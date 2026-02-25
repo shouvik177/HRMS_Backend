@@ -1,4 +1,3 @@
-"""REST API: employees and attendance."""
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -44,8 +43,16 @@ _attendance_post_schema = openapi.Schema(
 @permission_classes([AllowAny])
 def employee_list_create(request):
     if request.method == 'GET':
-        serializer = EmployeeSerializer(Employee.objects.all(), many=True)
-        return Response(serializer.data)
+        try:
+            serializer = EmployeeSerializer(Employee.objects.all(), many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            if "no such table" in str(e).lower() or "does not exist" in str(e).lower():
+                return Response(
+                    {"detail": "Database not ready. On Render, set Start Command to: sh start.sh"},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+            raise
     serializer = EmployeeSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -86,12 +93,20 @@ def employee_detail(request, pk):
 @permission_classes([AllowAny])
 def attendance_list_create(request):
     if request.method == 'GET':
-        qs = Attendance.objects.all().select_related('employee')
-        if request.query_params.get('date'):
-            qs = qs.filter(date=request.query_params['date'])
-        if request.query_params.get('employee_id'):
-            qs = qs.filter(employee__employee_id=request.query_params['employee_id'])
-        return Response(AttendanceListSerializer(qs, many=True).data)
+        try:
+            qs = Attendance.objects.all().select_related('employee')
+            if request.query_params.get('date'):
+                qs = qs.filter(date=request.query_params['date'])
+            if request.query_params.get('employee_id'):
+                qs = qs.filter(employee__employee_id=request.query_params['employee_id'])
+            return Response(AttendanceListSerializer(qs, many=True).data)
+        except Exception as e:
+            if "no such table" in str(e).lower() or "does not exist" in str(e).lower():
+                return Response(
+                    {"detail": "Database not ready. On Render, set Start Command to: sh start.sh"},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+            raise
     serializer = AttendanceSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
