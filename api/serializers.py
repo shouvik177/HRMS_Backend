@@ -1,8 +1,3 @@
-"""
-Serializers for API request/response. Match frontend expected shape:
-Employee: id, employee_id, full_name, email, department
-Attendance: id, employee_id, date, status
-"""
 from rest_framework import serializers
 from .models import Employee, Attendance
 
@@ -67,28 +62,18 @@ class AttendanceSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Date is required.")
         return value
 
-    def validate(self, attrs):
-        emp_id = attrs.get('employee_id')
-        date = attrs.get('date')
-        if emp_id and date:
-            try:
-                employee = Employee.objects.get(employee_id=emp_id)
-                if Attendance.objects.filter(employee=employee, date=date).exists():
-                    raise serializers.ValidationError(
-                        {"detail": "Attendance for this employee on this date already exists."}
-                    )
-            except Employee.DoesNotExist:
-                pass
-        return attrs
-
     def create(self, validated_data):
         emp_id = validated_data.pop('employee_id')
         employee = Employee.objects.get(employee_id=emp_id)
-        return Attendance.objects.create(employee=employee, **validated_data)
+        obj, _ = Attendance.objects.update_or_create(
+            employee=employee,
+            date=validated_data['date'],
+            defaults={'status': validated_data['status']}
+        )
+        return obj
 
 
 class AttendanceListSerializer(serializers.ModelSerializer):
-    """Response: id, employee_id, date, status for frontend."""
     employee_id = serializers.CharField(source='employee.employee_id', read_only=True)
 
     class Meta:

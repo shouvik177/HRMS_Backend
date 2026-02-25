@@ -1,6 +1,3 @@
-"""
-API URL routes. Base prefix is /api/ (from main urls.py).
-"""
 from django.urls import path
 from . import views, auth_views
 

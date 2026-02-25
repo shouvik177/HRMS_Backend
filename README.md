@@ -42,6 +42,23 @@ Use the token in requests: `Authorization: Token <token>`.
 | GET | /api/attendance/?date=YYYY-MM-DD&employee_id=... | List attendance (optional filters) |
 | POST | /api/attendance/ | Mark attendance (body: employee_id, date, status) |
 
+## Deploy on Render
+
+Migrations must run so `auth_user` and other tables exist. Two options:
+
+**Option A – Use the start script (recommended)**  
+Set **Start Command** in Render to:
+```bash
+sh start.sh
+```
+`start.sh` runs `python manage.py migrate --noinput` then starts uvicorn.
+
+**Option B – Set commands in Render dashboard**  
+- **Release Command:** `python manage.py migrate --noinput`  
+- **Start Command:** keep your current command (e.g. `uvicorn main:app --host 0.0.0.0 --port $PORT`).
+
+After redeploying, signup/login should work (no more "no such table: auth_user").
+
 ## Connect frontend
 
 In the **frontend** folder create `.env`:
