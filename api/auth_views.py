@@ -1,6 +1,8 @@
 """Auth API: register, login, logout. Returns token for Authorization header."""
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -75,7 +77,20 @@ def register(request):
     if User.objects.filter(username=email).exists():
         return Response({'detail': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = User.objects.create_user(username=email, email=email, password=password, first_name=name)
+    try:
+        user = User.objects.create_user(username=email, email=email, password=password, first_name=name)
+    except IntegrityError:
+        return Response({'detail': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+    except ValidationError as e:
+        if getattr(e, 'messages', None):
+            msg = e.messages[0] if isinstance(e.messages[0], str) else str(e.messages[0])
+        elif getattr(e, 'message_dict', None):
+            first = next(iter(e.message_dict.values()), None)
+            msg = first[0] if first and isinstance(first, list) else str(first) if first else 'Password does not meet requirements.'
+        else:
+            msg = str(e) if e else 'Password does not meet requirements.'
+        return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
+
     token, _ = Token.objects.get_or_create(user=user)
     return Response(_auth_response(user, token), status=status.HTTP_201_CREATED)
 

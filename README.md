@@ -14,6 +14,9 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+**Optional (ASGI):** `uvicorn main:app --host 127.0.0.1 --port 8000`  
+On Windows, avoid `--reload` with uvicorn to prevent a harmless subprocess traceback on file change; use `runserver` for auto-reload instead.
+
 - **API base:** http://127.0.0.1:8000/api/
 - **Swagger UI:** http://127.0.0.1:8000/swagger/
 - **ReDoc:** http://127.0.0.1:8000/redoc/
